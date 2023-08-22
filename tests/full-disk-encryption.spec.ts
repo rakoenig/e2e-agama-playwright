@@ -7,6 +7,9 @@ import { EncryptionPasswordPopup } from '../pages/encryption-password-popup';
 import { UsersPage } from '../pages/users-page';
 import { DefineUserPage } from '../pages/define-user-page';
 import { ConfigureRootPasswordPage } from '../pages/configure-root-password-page';
+import { ConfirmInstallationPage } from '../pages/confirm-installation-page';
+import { InstallationProgressPage } from '../pages/installing-page';
+import { CongratulationsPage } from '../pages/installation-finsihed-page';
 
 const minute = 60 * 1000;
 test.describe('The main page', () => {
@@ -58,20 +61,15 @@ test.describe('The main page', () => {
             // start the installation
             await expect(page.getByText("Installation will take")).toBeVisible({ timeout: 2 * minute });
             await mainPage.install();
-            await expect(page.getByText("Confirm Installation")).toBeVisible({ timeout: 2 * minute });
-            await page.getByRole("button", { name: "Continue" }).click();
+            const confirmInstallationPopup = new ConfirmInstallationPage(page);
+            await confirmInstallationPopup.confirm();
             // wait for the package installation progress
-            await expect(page.getByText("Installing packages")).toBeVisible({ timeout: 8 * minute });
-            while (true) {
-                try {
-                    await page.getByRole("heading", { name: "Congratulations!" }).waitFor({ timeout: minute / 2 });
-                    break;
-                }
-                catch (error) {
-                    // do not ignore other errors
-                    if (error.constructor.name !== "TimeoutError") throw (error);
-                }
-            }
+            const installationProgressPage = new InstallationProgressPage(page);
+            await installationProgressPage.expectProgress();
+
+            const congratulationsPage = new CongratulationsPage(page);
+            await congratulationsPage.expectCongratulations();
+
         })
     })
 })
