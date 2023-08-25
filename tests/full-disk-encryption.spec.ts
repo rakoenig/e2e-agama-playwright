@@ -9,7 +9,8 @@ import { DefineUserPage } from '../pages/define-user-page';
 import { ConfigureRootPasswordPage } from '../pages/configure-root-password-page';
 import { ConfirmInstallationPage } from '../pages/confirm-installation-page';
 import { InstallationProgressPage } from '../pages/installing-page';
-import { CongratulationsPage } from '../pages/installation-finsihed-page';
+import { CongratulationsPage } from '../pages/installation-finished-page';
+import { InstallActor } from '../actors/install-actor';
 
 const minute = 60 * 1000;
 test.describe('The main page', () => {
@@ -21,7 +22,7 @@ test.describe('The main page', () => {
         indexActor.handleProductSelectionIfAny();
     });
 
-      test('Full-disk encryption', async ({ page }) => {
+    test('Full-disk encryption', async ({ page }) => {
         const mainPage = new MainPage(page);
         await test.step("Set for Full-disk encryption", async () => {
             await mainPage.accessStorage();
@@ -57,19 +58,13 @@ test.describe('The main page', () => {
 
         //Installation
         await test.step("Run installation", async () => {
-            test.setTimeout(30 * minute);
-            // start the installation
-            await expect(page.getByText("Installation will take")).toBeVisible({ timeout: 2 * minute });
-            await mainPage.install();
-            const confirmInstallationPopup = new ConfirmInstallationPage(page);
-            await confirmInstallationPopup.confirm();
-            // wait for the package installation progress
+            const confirmInstallationPage = new ConfirmInstallationPage(page);
             const installationProgressPage = new InstallationProgressPage(page);
-            await installationProgressPage.expectProgress();
-
             const congratulationsPage = new CongratulationsPage(page);
-            await congratulationsPage.expectCongratulations();
-
+            test.setTimeout(30 * minute);
+            await expect(page.getByText("Installation will take")).toBeVisible({ timeout: 2 * minute });
+            const installActor = new InstallActor(page, mainPage, confirmInstallationPage, installationProgressPage, congratulationsPage);
+            installActor.handleInstallation();
         })
     })
 })
